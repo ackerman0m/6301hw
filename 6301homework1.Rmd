@@ -1,0 +1,102 @@
+---
+title: "Stat Computing HW1"
+author: "Michael Ackerman"
+date: "September 8th"
+output: pdf_document
+---
+
+```{r}
+gender <- c('M','M','F','M','F','F','M','F','M')
+age <- c(34, 64, 38, 63, 40, 73, 27, 51, 47)
+smoker <- c('no','yes','no','no','yes','no','no','no','yes')
+exercise <- factor(c('moderate','frequent','some','some','moderate','none','none','moderate','moderate'),
+                    levels=c('none','some','moderate','frequent'), ordered=TRUE
+)
+los <- c(4,8,1,10,6,3,9,4,8)
+x <- data.frame(gender, age, smoker, exercise, los)
+x
+```
+
+Model:
+
+```{r}
+model <- lm(los ~ gender + age + smoker + exercise, dat=x)
+```
+
+\textbf{1)} It appears that has being a male has the greatest effect on your length of stay with a value of 4.509.
+
+\textbf{2)}
+```{r}
+mod <- lm(los~gender)
+summary(mod)
+```
+
+\textbf{3)}
+```{r}
+mod$coef
+```
+\textbf{4)}
+```{r}
+sqrt(diag(vcov(mod)))
+```
+\textbf{5)}
+```{r}
+mod <- lm(los ~ gender, dat=x)
+mod.c <- coef(summary(mod))
+teststat <- mod.c[,1]/mod.c[,2]
+2*pt(teststat['genderM'], 7, lower.tail = FALSE)
+```
+\textbf{6)}
+```{r}
+fitted(mod)-predict(mod)
+```
+It looks like the functions work a tiny bit different, yet create essentially the same vector. 
+\textbf{7)}
+```{r}
+newdata <- data.frame(gender=c('F','M','F'))
+predict(mod,newdata)
+```
+\textbf{8)}
+```{r}
+residuals <- fitted(mod)- x$los
+residuals
+```
+\textbf{9)}
+```{r}
+residuals(mod)
+```
+Same result in absolute value. 
+\textbf{10)}
+```{r}
+sum(residuals^2) - deviance(mod)
+```
+These functions do the same thing.
+\textbf{11)}
+```{r}
+sqrt(deviance(mod)/df.residual(mod))
+```
+This is the same as the Residual Standard Error shown by the original model.
+\textbf{12)}
+```{r}
+xmen <- x[gender== "M",]
+women <- x[gender=="F",]
+```
+X-Men is the proper labeling. 
+\textbf{13)}
+```{r}
+var(xmen$los)
+var(women$los)
+```
+\textbf{14)}
+```{r}
+t.test(women$los, xmen$los)
+t.test(women$los, xmen$los, var.equal = T)
+
+```
+
+The equal variance assumption causes that p-value in the t-test comparison to be the same as the  full model with the genderM variable.
+
+```{r}
+##this is nice and consice. 
+t.test(los ~ gender, dat=x, var.equal=TRUE)
+```

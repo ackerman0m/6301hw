@@ -1,0 +1,140 @@
+---
+title: "Computing HW 2"
+author: "Michael Ackerman"
+date: "September 17, 2015"
+output: pdf_document
+---
+
+\textbf{1)}
+```{r}
+ cancer.df <- read.csv("~/Documents/Bios6301/datasets/cancer.csv")
+```
+\textbf{2)}
+```{r}
+ dim(cancer.df)
+```
+\textbf{3)}
+```{r}
+ names(cancer.df)
+```
+\textbf{4)}
+```{r}
+ cancer.df[3000,6]
+```
+\textbf{5)}
+```{r}
+ cancer.df[172,]
+```
+\textbf{6)}
+```{r}
+ cancer.df[,9] <- cancer.df[,7]/1000 
+ 
+```
+\textbf{7)}
+```{r}
+ length(cancer.df[,9][cancer.df[,9]==0])
+```
+\textbf{8)}
+```{r}
+  cancer.df[cancer.df[,9]==max(cancer.df[,9]),]
+```
+\textbf{Data Types
+1)}
+```{r}
+ x <- c("5","12","7")
+sort(x)
+#sum(x)
+max(x)
+```
+Because our x values are place in quotes, they are actually interpreted as characters. Therefore, I think the sort(x) function is analyzing the first numbers of our characters as if they were letters and putting them in alphabetical order. 
+The sum(x) function completely fails beacuse you simply can't add up characters. 
+The max(x) function just returns the character that's placed last in our sort(x) function based on the same alphabetic rules.
+\textbf{2)}
+```{r}
+y <- c("5",7,12)
+# y[2]+y[3]
+is.numeric(y[2])
+```
+We should be able to add the numbers 7 and 12 but by declaring the first term of the vector as a character automatically creates the other imputs as characters as well.
+
+\textbf{3)}
+```{r}
+z <- data.frame(z1="5",z2=7,z3=12)
+z[1,2]+z[1,3]
+```
+the data.frame() function allows each column to keep it's own class; therefore, 7 and 12 can be used as numeric values. 
+
+\textbf{Data Structures
+1)}
+```{r}
+
+```
+\textbf{2)}
+```{r}
+rep(1:5, times= 1:5)
+```
+\textbf{3)}
+```{r}
+matrix(rep(1,times=9),nrow=3)-diag(3)
+```
+
+\textbf{4)}
+```{r}
+############################
+ matrix(rep(1:4, each=5), ncol = 4)
+```
+\textbf{Basic Programming 
+1)}
+```{r}
+h <- function(x,n){
+  h <- 0
+  for (i in 1:n){
+    h <- h + x^(i-1) 
+  }
+  return(h)
+}
+##Test
+if(h(.5,100)==2) print("Correct!!") 
+```
+\textbf{2)}
+```{r}
+### 1
+n <- 1000
+sum <- 0
+for(i in 1:n) {
+  if(i %% 3 == 0 | i %% 5 == 0 ){
+    sum <- sum + i
+  }
+}
+sum
+
+### 2 
+#n <- 1000000
+#sum <- 0
+#for(i in 1:n) {
+#  if(i %% 4 == 0 | i %% 7 == 0 ){
+#    sum <- sum + i
+#  }
+#}
+#sum
+```
+This number is huge. 
+
+\textbf{3)}
+```{r}
+fib <- c(1,1)
+evenfib <- c()
+
+# while(length(evenfib) < 15){
+      
+  for(i in 3:50){
+    fib[i] <- fib[i-1]+fib[i-2]  
+      if(fib[i] %% 2 == 0 ){ 
+      evenfib <- c(evenfib, fib[i])
+      }
+  }
+  
+# }
+sum(evenfib[1:15])
+```
+I had to comment out my while loop because it wouldn't see "evenfib" and stop the loop at 15 as I was hoping for. 
