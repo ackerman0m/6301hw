@@ -66,22 +66,26 @@ residuals
 residuals(mod)
 ```
 Same result in absolute value. 
+
 \textbf{10)}
 ```{r}
 sum(residuals^2) - deviance(mod)
 ```
 These functions do the same thing.
+
 \textbf{11)}
 ```{r}
 sqrt(deviance(mod)/df.residual(mod))
 ```
 This is the same as the Residual Standard Error shown by the original model.
+
 \textbf{12)}
 ```{r}
 xmen <- x[gender== "M",]
 women <- x[gender=="F",]
 ```
 X-Men is the proper labeling. 
+
 \textbf{13)}
 ```{r}
 var(xmen$los)
