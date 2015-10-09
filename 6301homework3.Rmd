@@ -1,0 +1,77 @@
+---
+title: "Stat Comp HW 3"
+author: "Michael Ackerman"
+date: "October 8, 2015"
+output: pdf_document
+---
+\textbf{1)}
+
+```{r,eval=T}
+set.seed(72) 
+powerTest <- function(n = 100){
+  half <- n/2
+  trts <- c(rep(0,half),rep(1,half)) ##Vector of half 0's, half 1's
+  
+  outcome <- c() 
+  outcome[1:half] <- rnorm(half,60, 20) ## 0's have mu=60
+  outcome[half+1:half] <- rnorm(half,65, 20) ## 1's have mu=65
+  
+  p = summary(lm(outcome ~ trts))$coefficients[2,4]
+  ifelse(p<=.05, 1,0) ## Assign 0 or 1 to p values
+}
+
+rp1000 <- function(n=100){ ##repeat this procedure 1000 times for n-sized   sample
+x<- matrix(n,ncol=1000)
+x<- apply(x,2,powerTest)
+sum(x)/1000 ##Avg number of p<=.05
+}
+```
+Now that we've established a few functions we can answer the quesitons for various N values:
+
+```{r,eval=T}
+N <- c(100,1000)
+Power <- c(rp1000(100), rp1000(1000))
+cbind(N,Power)
+```
+
+\textbf{2)}
+
+```{r, fig.height=5, fig.width=5, eval=T}
+require(MASS)
+proj_rb15 <- read.csv("~/Downloads/football-values-master/2015/proj_rb15.csv")
+d <- proj_rb15[,-1:-2]
+round(cor(d), digits=4)
+
+######################## Part 2
+
+mess = function(val) return(val + rnorm(1, 0, 0.05))
+
+cor_sum <- matrix(0, 8,8) #Initialize a matrix  
+n <- 10000
+for(i in 1:n){
+ new_cor <- apply(cor(d),c(1, 2),  mess) #make a similar correlation matrix ##### c(1,2) does it to both rows and columns
+ approx <- mvrnorm(30, colMeans(d), new_cor,8,8) #Generate data with that correlation matrix
+ cor_sum = cor_sum + cor(approx) #add to aggregate matrix
+}
+
+A <- cor_sum/n #Find average
+diag(A) <- rep(1,8) #So that ppl dont laugh at us
+round(A, digits=4)
+
+######################## Part 3
+
+exact <- mvrnorm(30, colMeans(d), cor(d), empirical=T)
+round(cor(exact), digits=4)
+```
+
+\textbf{3)}
+$$\begin{aligned} 
+P(B) & = \sum_jP(B|A_j)P(A_j), \\
+& \Rightarrow P(A_i|B) = \frac{P(B|A_i)P(A_i)}{\sum_j(B|A_j)P(A_j)}
+\end{aligned}$$
+
+$$\hat{f}(\zeta) = \int_{-\infty}^{\infty} f(x)e^{-2\pi ix \zeta} dx$$
+
+$$\textbf{J} = \frac{d\textbf{f}}{d\textbf{x}} = \\
+\left[\frac{\partial\textbf{f}}{\partial x_1} ... \frac{\partial\textbf{f}}{\partial x_n} \right] = \left[\begin{matrix} \frac{\partial f_1}{\partial x_1} & \dots & \frac{\partial f_1}{\partial x_n} \\ \vdots & \ddots & \vdots \\ \frac{\partial f_m}{\partial x_1} & \dots & \frac{\partial f_m}{\partial x_n} \ \end{matrix}\right]$$
+
