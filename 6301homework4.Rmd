@@ -1,0 +1,199 @@
+---
+title: "Stat Comp HW 4"
+author: "Michael Ackerman"
+date: "October 27, 2015"
+output: html_document
+---
+
+Secant Algorithm Code:
+```{r}
+seca <- function(x, f, tol=1e-10, maxit=1000){
+  i<-2
+  while( abs(f(x[i])) > tol & i < maxit){
+    x[i+1] <- x[i]-f(x[i])*((x[i]-x[i-1])/(f(x[i])-f(x[i-1])))
+    i <- i+1
+  }
+    if(i==maxit) stop('pick a bigger number, bro')
+    x[i]
+}
+
+## Initial guesses in vector form 
+x<- c(-8,-7)
+## Validation Function
+f <- function(x) { cos(x)-x }
+## Call Code
+seca(x,f)
+
+## Newton Method
+newton <- function(guess, f, df, tol=1e-10, maxit=1000){
+  i<-1
+  while( abs(f(guess)) > tol & i < maxit){
+    guess <- guess - f(guess)/df(guess)
+    i <- i+1
+  }
+    if(i==maxit) stop('method didnt converge')
+    guess
+}
+## Validation Function derivative
+df <- function(x) { -sin(x)-1}
+
+## Time comparison
+system.time(replicate(10000, newton(-8,f,df))) - system.time(replicate(10000, seca(x,f)))
+```
+
+For this time comparison, I ran the above code many times and recieved an even amount of positive and negative values for "user time". 
+
+**2)**
+This code will play Craps 'n' number of times.
+```{r}
+Craps <- function(games=1, seed= .Random.seed){
+  set.seed(seed) 
+  results <- c()
+  for(i in 1:games){ 
+die <- sum(ceiling(6*runif(2)))
+win <- -1
+while(win==-1){
+   if(die == 7 | die == 11) {win <- 1}
+   die2 <- sum(ceiling(6*runif(2)))
+   if(die2 == 7 | die2 == 11) {win <- 0}
+   else if(die==die2){win <- 1}
+ } 
+results <- c(results, win)
+}
+return(results)
+} 
+
+Craps(games= 3,seed = 100)
+```
+
+In the code, "0" denotes a loss. So with a seed(100), we'll lose the first three games.
+
+This code finds the seed value that will produce 10 straight wins.
+
+```{r}
+i <- 1
+set.seed(i)
+for(i in seq(10000)){
+ 
+  if(sum(Craps(10,i)) == 10){ ##Alter seed value of 10 game sessions.
+    print(i)
+    break
+  } else {i <- i+1} ## Add to seed value and keep trying.
+}
+Craps(10,seed= i)
+```
+
+Yeah! With "1" denoting "Win", we just won 10 games!
+
+**3)**
+```{r eval=FALSE}
+setwd("/Users/michaeltackerman/Documents/Bios6301/football-values-master/2015")
+
+ffvalues <- function(path, file='outfile.csv', nTeams=12, cap=200,
+                     posReq=c(qb=1, rb=2, wr=3, te=1, k=1),
+                     points=c(fg=4, xpt=1, pass_yds=1/25, pass_tds=4, 
+                     pass_ints=-2, rush_yds=1/10, rush_tds=6, fumbles=-2, 
+                     rec_yds=1/20, rec_tds=6)) {
+  
+qb <- read.csv("proj_qb15.csv")  ## read in CSV files
+rb <- read.csv("proj_rb15.csv")
+te <- read.csv("proj_te15.csv")
+wr <- read.csv("proj_wr15.csv")
+k <- read.csv("proj_k15.csv")  
+
+k[,'pos']  <- 'k'
+qb[,'pos'] <- 'qb'
+rb[,'pos'] <- 'rb'  
+te[,'pos'] <- 'te'
+wr[,'pos'] <- 'wr'
+
+wr$points <- with(wr, rush_yds/10 + rush_tds*6 + rec_yds/20 + rec_tds*6 - 
+                    fumbles*2)
+te$points <- with(te, rec_yds/20 + rec_tds*6 - fumbles*2)
+qb$points <- with(qb, 4*rush_tds+pass_yds/25+pass_tds*4+pass_ints*(-2)
+                    +rush_yds/10+rush_tds*6+fumbles*(-2))
+k$points <- with(k, 4*fg+xpt)
+rb$points <- with(rb, rush_yds/10 + rush_tds*6 + rec_yds/20 + rec_tds*6 - 
+                    fumbles*2)
+k  <- k[,c('PlayerName','pos','points')]
+qb <- qb[,c('PlayerName','pos','points')]
+rb <- rb[,c('PlayerName','pos','points')] 
+te <- te[,c('PlayerName','pos','points')]
+wr <- wr[,c('PlayerName','pos','points')]
+
+x <- rbind(k,qb,rb,te,wr)
+
+x2 <- x[order(x[,'points'], decreasing=TRUE),]
+
+k.ix <- which(x2[,'pos']=='k') 
+qb.ix <- which(x2[,'pos']=='qb') 
+rb.ix <- which(x2[,'pos']=='rb') 
+te.ix <- which(x2[,'pos']=='te') 
+wr.ix <- which(x2[,'pos']=='wr')
+
+x2[k.ix, 'marg'] <- x2[k.ix,'points'] - x2[k.ix[12],'points']
+x2[qb.ix, 'marg'] <- x2[qb.ix,'points'] - x2[qb.ix[12],'points']
+x2[rb.ix, 'marg'] <- x2[rb.ix,'points'] - x2[rb.ix[24],'points']
+x2[te.ix, 'marg'] <- x2[te.ix,'points'] - x2[te.ix[12],'points']
+x2[wr.ix, 'marg'] <- x2[wr.ix,'points'] - x2[wr.ix[36],'points']
+
+x3 <- x2[x2[,'marg'] >= 0,]
+
+# re-order by marginal points
+x3 <- x3[order(x3[,'marg'], decreasing=TRUE),]
+rownames(x3) <- NULL
+
+x3[,'value'] <- x3[,'marg']*(12*200-nrow(x3))/sum(x3[,'marg']) + 1
+
+ write.csv(x3, file)
+
+  return(x3)
+}
+###########################################################
+
+
+# How many players are worth more than $20? (1 point)
+
+x1 <- ffvalues(.)
+sum(x1[,'value']>20)
+
+## Who is 15th most valuable running back (rb)? (1 point)
+
+x1[x1[,'pos']=='rb',][15,]
+
+#  How many players are worth more than $20? (1 point)
+
+x2 <- ffvalues(getwd(), '16team.csv', nTeams=16, cap=150)
+sum(x2[,'value']>20)
+
+#  1.  How many wide receivers (wr) are in the top 40? (1 point)
+
+sum(x2[x2['pos']=='wr',]$value >40)
+##############################
+    x3 <- ffvalues('.', 'qbheavy.csv', posReq=c(qb=2, rb=2, wr=3, te=1, k=0),
+            points=c(fg=0, xpt=0, pass_yds=1/25, pass_tds=6, pass_ints=-2,
+                    rush_yds=1/10, rush_tds=6, fumbles=-2, rec_yds=1/20, rec_tds=6))
+
+
+    #  How many players are worth more than $20? (1 point)
+    
+sum(x2[,'value']>20)
+
+   # How many quarterbacks (qb) are in the top 30? (1 point)
+
+sum(x2[1:30,'pos']=='qb')
+```
+
+**4)**
+```{r}
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.function, objs)
+## 1)
+argLengths = lapply(funs, function(f) length(formals(f)))
+
+funs[[which.max(argLengths)]]
+
+## 2)
+sum(argLengths == 0)
+```
+
