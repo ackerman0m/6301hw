@@ -102,7 +102,7 @@ df &lt;- function(x) { -sin(x)-1}
 ## Time comparison
 system.time(replicate(10000, newton(-8,f,df))) - system.time(replicate(10000, seca(x,f)))</code></pre>
 <pre><code>##    user  system elapsed 
-##  -0.045   0.011  -0.026</code></pre>
+##   0.063   0.013   0.134</code></pre>
 <p>For this time comparison, I ran the above code many times and recieved an even amount of positive and negative values for “user time”.</p>
 <p><strong>2)</strong> This code will play Craps ‘n’ number of times.</p>
 <pre class="r"><code>Craps &lt;- function(games=1, seed= .Random.seed){
@@ -274,7 +274,7 @@ funs[[which.max(argLengths)]]</code></pre>
 ##         na.strings, flush, fill, strip.white, quiet, blank.lines.skip, 
 ##         multi.line, comment.char, allowEscapes, encoding, skipNul))
 ## }
-## &lt;bytecode: 0x7f9be5913840&gt;
+## &lt;bytecode: 0x7ff78324d640&gt;
 ## &lt;environment: namespace:base&gt;</code></pre>
 <pre class="r"><code>## 2)
 sum(argLengths == 0)</code></pre>
