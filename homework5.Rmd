@@ -1,0 +1,186 @@
+---
+title: "Homework 5"
+author: "Michael Ackerman"
+date: "November 10, 2015"
+output: pdf_document
+---
+
+**Question 1**
+
+```{r}
+#load data and packages
+setwd("/Users/michaeltackerman/Documents/Bios6301/datasets")
+h <- read.csv("haart.csv", stringsAsFactors = F)
+library(lubridate)
+library(knitr)
+
+#convert dates
+h$init.date <- mdy(h$init.date) 
+h$date.death <- mdy(h$date.death)
+h$last.visit <- mdy(h$last.visit)
+
+#Fix a date
+i <- which(year(h$init.date)>2016)
+h$init.date[i] <-mdy("04081998")
+
+# 1) Table 
+table(format(h$init.date, "%Y"))
+
+# 2) Create indicator variable
+h$dead1 <- ifelse(!is.na(h$date.death) & h$date.death-h$init.date <=365,1,0) 
+# How many people died within the first year?
+sum(h[,"dead1"])
+
+h$followup <- with(h, ifelse(death==1,
+                     ifelse( difftime(date.death, init.date,unit="days")<=365, 
+                             difftime(date.death, init.date,unit="days"), 365), 
+                     ifelse(difftime(last.visit, init.date,unit="days")<=365,
+                            difftime(last.visit, init.date,unit="days"),365)))
+
+#Quantiles
+quantile(h$followup)
+
+# 4) Loss of Follow up 
+h$lost <- with(h, ifelse(is.na(date.death) & is.na(last.visit),1,0))
+# Amount lost
+sum(h$lost)
+
+#5) 
+#Code from class
+reg_list <- strsplit(as.character(h[,'init.reg']),',')
+all_drugs <- unique(unlist(reg_list))
+reg_drugs <- matrix(nrow=nrow(h),ncol=length(all_drugs))
+for(i in seq_along(all_drugs)){
+  reg_drugs[,i] <- +sapply(reg_list, function(x) all_drugs[i] %in% x)
+# + makes T/F into 1/0
+}
+colnames(reg_drugs) <- all_drugs
+
+# created a matrix of only unique pairings of drugs
+uniques <- reg_drugs[!duplicated(reg_drugs), ]
+
+results <- integer(47) 
+
+#this isnt the most effecient way to do this but it compares all combos
+for(j in seq_along(uniques[,1])){
+  for(i in seq_along(reg_drugs[,1])){
+    if(identical(uniques[j,], reg_drugs[i,])){
+      results[j] <-  results[j]+1 }
+  }
+}
+# Print out the drug combos that are greater than 100
+cbind(uniques[results>100,],results[results>100])
+
+
+#6)
+# If this question had been read before, I would have made my cleaning more generalizable; instead, it's easier to just reuse the code rather than going back and making functions.  
+h <- read.csv("haart.csv",stringsAsFactor =F)
+h2 <- read.csv("haart2.csv",stringsAsFactor =F)
+h <- rbind(h,h2)
+
+#convert dates
+h$init.date <- mdy(h$init.date) 
+h$date.death <- mdy(h$date.death)
+h$last.visit <- mdy(h$last.visit)
+
+#Fix a date
+i <- which(year(h$init.date)>2016)
+h$init.date[i] <-mdy("04081998")
+
+# Create indicator variable for death in first year
+h$dead1 <- ifelse(!is.na(h$date.death) & h$date.death-h$init.date <=365,1,0) 
+
+# follow up
+h$followup <- with(h, ifelse(death==1,
+                     ifelse( difftime(date.death, init.date,unit="days")<=365, 
+                             difftime(date.death, init.date,unit="days"), 365), 
+                     ifelse(difftime(last.visit, init.date,unit="days")<=365,
+                            difftime(last.visit, init.date,unit="days"),365)))
+
+#Loss of Follow up 
+h$lost <- with(h, ifelse(is.na(date.death) & is.na(last.visit),1,0))
+
+kable(h[-(6:999),-(3:7)])
+```
+
+**Question 2**
+```{r}
+toRegress = h[,c("death", "weight", "hemoglobin", "cd4baseline")]
+toRegress = toRegress[complete.cases(toRegress),]
+
+x <- toRegress[2:4]
+y <- toRegress[1]
+
+
+
+estimate_logistic <- function(x, y, MAX_ITER=10) {
+
+  logistic <- function(x) 1 / (1 + exp(-x))
+    
+    n <- dim(x)[1]
+    k <- dim(x)[2]
+
+    x <- as.matrix(cbind(rep(1, n), x))
+    y <- as.matrix(y)
+
+    # Initialize fitting parameters
+    theta <- rep(0, k+1)
+
+    J <- rep(0, MAX_ITER)
+
+    for (i in 1:MAX_ITER) {
+
+        # Calculate linear predictor
+        z <- x %*% theta
+        # Apply logit function
+        h <- logistic(z)
+
+        # Calculate gradient
+        grad <- t((1/n)*x) %*% as.matrix(h - y)
+        # Calculate Hessian
+        H <- t((1/n)*x) %*% diag(array(h)) %*% diag(array(1-h)) %*% x
+
+        # Calculate log likelihood
+        J[i] <- (1/n) %*% sum(-y * log(h) - (1-y) * log(1-h))
+
+        # Newton's method
+        theta <- theta - solve(H) %*% grad
+    }
+
+    return(theta)
+}
+estimate_logistic(x, y)
+```
+
+**Question 3** 
+
+```{r}
+setwd("/Users/michaeltackerman/Documents/Bios6301/datasets")
+addr <- readLines("addr.txt")
+
+this <- lapply(addr, function(s) {unlist(strsplit(s, split= "[ ]{2,}"))})
+streetno <- unlist(lapply(this, function(s) {strsplit(s[3],split="[ ]{1}")[[1]][1]} ))
+streetname <- unlist(lapply(this, function(s) {gsub("[0-9 ]{1,} ","",s[3])} ))
+info <- data.frame()
+
+for(i in seq_along(this)){
+  for(j in c(1,2)){
+    info[i,j] <- this[[i]][j]
+  }
+    info[i,3] <- streetno[i]
+    info[i,4] <- streetname[i]
+  
+  for(j in 5:7){
+    info[i,j] <- this[[i]][j-1]
+  }
+}
+
+names(info) <- c("lastname", "firstname", "streetno", "streetname", "city", "state", "zip")
+
+kable(info)
+```
+
+** Question 4 **
+
+
+
